@@ -21,14 +21,19 @@ public class Client
     void start()
     {
         String data_to_send;
+        String data_from_server;
         io.toNetwork("Hello Server");
-        io.toScreen(io.fromNetwork());
+        data_from_server = io.fromNetwork();
+        io.toScreen(data_from_server);
+       
         do
         {
             data_to_send = io.fromScreen();
             io.toNetwork(data_to_send);
-            io.toScreen(io.fromNetwork());
-        }while(data_to_send != "close");
+            data_from_server = io.fromNetwork();
+            io.toScreen(data_from_server);
+            
+        }while(!data_to_send.equals("close"));
     }
 
     
