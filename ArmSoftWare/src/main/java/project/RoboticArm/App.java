@@ -1,9 +1,12 @@
 package project.RoboticArm;
 
 import javafx.application.Application;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import project.RoboticArm.views.MainView;
+import javafx.fxml.FXMLLoader;
+
 
 
 /**
@@ -12,20 +15,15 @@ import project.RoboticArm.views.MainView;
  */
 public class App extends Application
 {
-    private final String WINDOW_TITLE = "Robotic Arm";
-    private final int WINDOW_WIDTH = 1280;
-    private final int WINDOW_HEIGHT = 720;
 
     @Override
-    public void start(Stage primaryStage) 
+    public void start(Stage primaryStage) throws Exception
     {
-        Scene mainViewScene = new Scene(new MainView(20));
-
-        primaryStage.setScene(mainViewScene);
-        primaryStage.setTitle(WINDOW_TITLE);
-        primaryStage.setWidth(WINDOW_WIDTH);
-        primaryStage.setHeight(WINDOW_HEIGHT); 
-
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/project/RoboticArm/test.fxml"));
+        Parent root = loader.load();
+        Scene scene = new Scene(root);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("Application JavaFX avec Maven");
         primaryStage.show();
     }
     public static void main( String[] args )

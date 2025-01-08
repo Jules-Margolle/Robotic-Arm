@@ -1,3 +1,5 @@
+package project.RoboticArm.views;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -83,3 +85,4 @@ public class IOCommands
     }
 
 }
+

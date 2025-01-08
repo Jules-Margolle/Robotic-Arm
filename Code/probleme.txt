@@ -1,3 +1,0 @@
-blocage reception données du serveur vers le client
--> résolu : puisqu'on utilise un "readLine" en java, la chaine python doit avoir un caractère spécial
-            en fin de chaîne. ici le retour à la ligne "\n"

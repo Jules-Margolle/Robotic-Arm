@@ -24,8 +24,8 @@ def get_positions_to_send():
     return [int(pos_axe1), int(pos_axe2)]
 
 def read_feedback():
-    data = bus.read_i2c_block_data(ARDUINO_I2C_ADDRESS, 0, 2)
-    return data[0], data[1]
+    data = bus.read_i2c_block_data(ARDUINO_I2C_ADDRESS, 0, 8)
+    return data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]
 
 def record_positions():
     print("Appuyez sur 1 pour enregistrer une position.")
@@ -38,6 +38,10 @@ def record_positions():
         elif command == "q":
             print("Fin de l'enregistrement.")
             break
+
+
+
+
 
 while True:
     command = input("Entrez la commande : 1 pour faire bouger les servos, 2 pour lire les feedbacks, 3 pour enregistrer des positions : ")
@@ -54,11 +58,14 @@ while True:
         print("Tableau reçu :", feedback_array)
 
     elif command == "3":
+        send_array(3, [0])
         record_positions()
 
     # Une fois les positions enregistrées, envoyez-les à l'Arduino si nécessaire
     if len(positions) > 0:
-        send_array(2, [len(positions)])  # Indiquer à l'Arduino qu'il y a des positions à charger
+        send_array(2, [len(positions)])
         for pos in positions:
-            send_array(3, pos)  # Envoyer chaque position à l'Arduino
+            tab = [pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7]]
+            send_array(40, tab)  # Envoyer chaque position à l'Arduino
+            
         positions.clear()  # Réinitialiser le tableau des positions

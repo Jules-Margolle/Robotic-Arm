@@ -1,3 +1,5 @@
+package project.RoboticArm.views;
+
 import java.net.Socket;
 
 public class Client 
@@ -20,21 +22,10 @@ public class Client
 
     void start()
     {
-        String data_to_send;
-        String data_from_server;
         io.toNetwork("Hello Server");
-        data_from_server = io.fromNetwork();
-        io.toScreen(data_from_server);
-       
-        do
-        {
-            data_to_send = io.fromScreen();
-            io.toNetwork(data_to_send);
-            data_from_server = io.fromNetwork();
-            io.toScreen(data_from_server);
-            
-        }while(!data_to_send.equals("close"));
+        io.toScreen(io.fromNetwork());
     }
 
     
 }
+
