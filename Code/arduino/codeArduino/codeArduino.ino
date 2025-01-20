@@ -9,6 +9,8 @@
 Servo servo1;
 Servo servo2;
 
+
+
 #define servo0 2
 #define servo1 3
 #define servo2 4
@@ -29,12 +31,14 @@ Servo servo2;
 
 Servo servo[8];
 short int fd[8];
-short int step = 1;
-short int speedDelay = 1;
+int step = 1;
+short int speedDelay = 50;
 
 
-int receivedArray[100]; // Tableau pour stocker les données reçues
+short int receivedArray[100]; // Tableau pour stocker les données reçues
 short int target[8];
+short int recordedPositions[100][8];
+int indexRecordedPositions = 0;
 int receivedInt = 0;
 int index = 0;
 int positionIndex = 0;
@@ -62,7 +66,7 @@ void receiveEvent(int numBytes) {
 
   for(int i=1 ; i< 9; i++)
   {
-    receivedArray[i] = target[i-1];
+    target[i-1] = receivedArray[i];
   }
 }
 
@@ -91,7 +95,32 @@ int stepMove(short int position, short int TargetAngle, Servo &servo){ // foncti
   return position;
 }
 
+void recordPositions(){
+  int tab[8];
+  feedback();
+  for(int i=0; i<8; i++)
+  {
+    recordedPositions[indexRecordedPositions][i] = fd[i];
+  }
+  
+  indexRecordedPositions++;
+  for(int i =0; i< 8; i++)
+  {
+    Serial.print(recordedPositions[indexRecordedPositions-1][i]);
+    Serial.print(" ");
+  }
+  Serial.println("");
+}
+
 void move(short int TargetAngle[]){
+
+  // servo[0].write(180);
+  // servo[1].write(180);
+  // delay(2000);
+  // servo[0].write(0);
+  // servo[1].write(0);
+  // delay(2000);
+  
   short int positionServo[8];
   unsigned short int j = 0;
   unsigned short int cpt = 0;
@@ -111,7 +140,8 @@ void move(short int TargetAngle[]){
     delay(speedDelay); // delai permettant de regler la vitesse
     Serial.println(cpt);
   }
-  feedback(); // surement à supprimer
+  //feedback(); // surement à supprimer
+ 
 }
 
 
@@ -153,6 +183,7 @@ void setup() {
   pinMode(FDservo5, INPUT);  
   pinMode(FDservo6, INPUT);
   pinMode(FDservo7, INPUT);
+  
 }
 
 void loop() {
@@ -176,9 +207,24 @@ void loop() {
         detachServo();
         
     }
-    else if (receivedArray[0] == 40) {
+    else if (receivedArray[0] == 4) {
+      recordPositions();
+    }
+    else if(receivedArray[0] == 5)
+    {
+      indexRecordedPositions = 0;
+    }
+    else if(receivedArray[0] == 6)
+    {
+      attachServo();
+      short int temp[indexRecordedPositions];
+      for(int i=0 ; i<indexRecordedPositions; i++)
+      {
+        move(recordedPositions[i]);
+      }
+      indexRecordedPositions = 0;
+
       
-      move(target);
     }
   }
   delay(100);

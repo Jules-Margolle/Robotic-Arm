@@ -1,5 +1,6 @@
 import smbus
 import time
+import RPi.GPIO as GPIO
 
 # Adresse I2C de l'Arduino
 ARDUINO_I2C_ADDRESS = 0x08
@@ -9,6 +10,10 @@ bus = smbus.SMBus(1)  # 1 pour Raspberry Pi récente (I2C-1)
 
 # Tableau pour stocker les positions
 positions = []
+
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(REACHED_POSITION, GPIO.IN)
 
 def send_array(command, array):
     # Découper le tableau en tranches de 32 octets (limite I2C)
@@ -58,14 +63,30 @@ while True:
         print("Tableau reçu :", feedback_array)
 
     elif command == "3":
-        send_array(3, [0])
-        record_positions()
+        array_to_send = [0]
+        send_array(3, array_to_send)
+    
+    elif command == "4":
+        array_to_send = [0]
+        send_array(4, array_to_send)
 
+    elif command == "5":
+        array_to_send = [0]
+        send_array(5, array_to_send)
+
+    elif command == "6":
+        array_to_send = [0]
+        send_array(6, array_to_send)
+
+"""
     # Une fois les positions enregistrées, envoyez-les à l'Arduino si nécessaire
     if len(positions) > 0:
         send_array(2, [len(positions)])
         for pos in positions:
             tab = [pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7]]
             send_array(40, tab)  # Envoyer chaque position à l'Arduino
+            while GPIO.input(REACHED_POSITION) == GPIO.LOW:
+                time.sleep(0.1)
             
         positions.clear()  # Réinitialiser le tableau des positions
+"""
