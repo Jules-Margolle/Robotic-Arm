@@ -1,6 +1,14 @@
 {
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
-        "/Users/julesmargolle/Documents/LocalApps/OpenJFX/lib/**/*.jar"
+        "/Users/julesmargolle/Documents/LocalApps/OpenJFX/lib/**/*.jar",
+        "pajet-app/lib/openJFX/lib/javafx.base.jar",
+        "pajet-app/lib/openJFX/lib/javafx.controls.jar",
+        "pajet-app/lib/openJFX/lib/javafx.fxml.jar",
+        "pajet-app/lib/openJFX/lib/javafx.graphics.jar",
+        "pajet-app/lib/openJFX/lib/javafx.media.jar",
+        "pajet-app/lib/openJFX/lib/javafx.swing.jar",
+        "pajet-app/lib/openJFX/lib/javafx.web.jar",
+        "pajet-app/lib/openJFX/lib/javafx-swt.jar"
     ]
 }
