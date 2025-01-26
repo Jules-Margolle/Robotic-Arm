@@ -69,8 +69,26 @@
                 <Color red="0.624" green="0.624" blue="0.624" fx:id="x2" />
               </textFill>
             </Label>
-                  <Button fx:id="freeMotionButton" layoutX="17.0" layoutY="77.0" mnemonicParsing="false" onAction="#switchFreeMotion" prefHeight="25.0" prefWidth="127.0" text="Mouvement Libre" />
+                  <Button fx:id="freeMotionButton" layoutX="8.0" layoutY="70.0" mnemonicParsing="false" onAction="#switchFreeMotion" prefHeight="39.0" prefWidth="214.0" text="Mouvement Libre">
+                     <font>
+                        <Font size="18.0" />
+                     </font></Button>
                   <Button layoutX="37.0" layoutY="495.0" mnemonicParsing="false" onAction="#switchToConnectionScene" text="Déconnexion" />
+                  <Button fx:id="recordPosititionButton" layoutX="8.0" layoutY="122.0" mnemonicParsing="false" onAction="#recordPosition" text="Enregistrer une position">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Button>
+                  <Button layoutX="43.0" layoutY="431.0" mnemonicParsing="false" onAction="#resetIndexPosition" text="Reset Index Position">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Button>
+                  <Button layoutX="40.0" layoutY="206.0" mnemonicParsing="false" onAction="#moveRecordedPositions" text="Jouer la séquence">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Button>
           </children>
         </AnchorPane>
         <ScrollPane prefHeight="-1.0" prefWidth="-1.0">
@@ -78,11 +96,6 @@
             <AnchorPane id="Content" minHeight="-1.0" minWidth="-1.0" prefHeight="545.0" prefWidth="430.0">
               <children>
                 <Label alignment="CENTER" font="$x1" layoutX="14.0" layoutY="14.0" style="&#10;" text="View" textAlignment="CENTER" textFill="$x2" wrapText="false" />
-                        <Label fx:id="testIP" layoutX="172.0" layoutY="106.0" text="Label">
-                           <font>
-                              <Font size="33.0" />
-                           </font>
-                        </Label>
               </children>
             </AnchorPane>
           </content>

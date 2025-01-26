@@ -212,26 +212,24 @@ void loop() {
     Serial.println();
     index = 0; // Réinitialiser l'index pour recevoir de nouvelles données
 
-    if (receivedArray[0] == 2) {
-      positionIndex = receivedArray[1];
-      attachServo();
-
+    if (receivedArray[0] == 0) {
+      detachServo();
+    }
+    else if(receivedArray[0] == 1)
+    {
+        attachServo();
+        
+    }
+    else if (receivedArray[0] == 2) {
+      recordPositions();
     }
     else if(receivedArray[0] == 3)
     {
-        detachServo();
-        
-    }
-    else if (receivedArray[0] == 4) {
-      recordPositions();
-    }
-    else if(receivedArray[0] == 5)
-    {
       indexRecordedPositions = 0;
     }
-    else if(receivedArray[0] == 6)
+    else if(receivedArray[0] == 4)
     {
-      attachServo();
+      //attachServo(); a verifier parce que je passe la commande dans le client java
       short int temp[indexRecordedPositions];
 
       for(int i=0 ; i<indexRecordedPositions; i++)

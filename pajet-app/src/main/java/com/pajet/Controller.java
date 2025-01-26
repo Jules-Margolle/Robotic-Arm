@@ -25,14 +25,15 @@ public class Controller {
 
     @FXML
     private Button freeMotionButton;
+    
     @FXML
     private TextField ipField;
     @FXML
     private TextField portField;
     @FXML
     private Label connectionError;
-    @FXML
-    private Label testIP;
+
+    
      
 
     /* 
@@ -88,5 +89,23 @@ public class Controller {
         System.out.println(isFreeMotion);
 
     }
-    
+
+    public void recordPosition()
+    {
+        io.toNetwork("2");
+    }
+
+    public void resteIndexPosition()
+    {
+        io.toNetwork("3");
+    }
+
+    public void moveRecordedPositions()
+    {
+        if(!isFreeMotion)
+        {
+            switchFreeMotion();
+        }
+        io.toNetwork("4");
+    }
 }
