@@ -25,7 +25,6 @@ public class Controller {
 
     @FXML
     private Button freeMotionButton;
-    
     @FXML
     private TextField ipField;
     @FXML
@@ -33,9 +32,7 @@ public class Controller {
     @FXML
     private Label connectionError;
 
-    
      
-
     /* 
     public void switchToMainScene(ActionEvent event) throws Exception
     {
@@ -95,7 +92,7 @@ public class Controller {
         io.toNetwork("2");
     }
 
-    public void resteIndexPosition()
+    public void resetIndexPosition()
     {
         io.toNetwork("3");
     }
