@@ -232,13 +232,6 @@ void loop() {
       for(int i=0 ; i<indexRecordedPositions; i++)
       {
         move(recordedPositions[i]);
-        if(i==1){
-          fermeturePince();
-        }
-        else{
-        ouverturePince();  
-        }
-        
         delay(1000);
       }
       indexRecordedPositions = 0;
