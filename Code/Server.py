@@ -1,7 +1,7 @@
 import socket
 import smbus
 import time
-
+import Gen_BDD_para
 
 ARDUINO_I2C_ADDRESS = 0x08
 bus = smbus.SMBus(1)
@@ -25,6 +25,9 @@ def data_handler(data):
     array_to_send = [0]
     send_array(int(data), array_to_send)
 
+#def send_to_client():
+
+
 
 def handle_client(client_socket, client_address):
     print(f"Nouveau client connecté : {client_address}")
@@ -34,8 +37,12 @@ def handle_client(client_socket, client_address):
 
             data = client_socket.recv(1024)
             if data:
-                print(f"Message reçu : {data.decode('utf-8')}")
-                data_handler(data.decode('utf-8'))
+                if int(data) != 100:
+                    print(f"Message reçu : {data.decode('utf-8')}")
+                    data_handler(data.decode('utf-8'))
+                else :
+                    send_to_client()
+            
 
     except (ConnectionResetError, BrokenPipeError):
         print("Déconnexion du client")

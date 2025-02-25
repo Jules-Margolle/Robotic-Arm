@@ -7,9 +7,6 @@
 
 // Définir les pins des servos
 
-
-
-
 #define servo0 2
 #define servo1 3
 #define servo2 4

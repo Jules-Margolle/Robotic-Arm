@@ -9,6 +9,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
@@ -61,30 +62,22 @@
       <items>
         <AnchorPane prefHeight="551.0" prefWidth="176.0">
           <children>
-            <Label alignment="CENTER" layoutX="14.0" layoutY="14.0" minWidth="60.0" prefWidth="-1.0" style="&#10;" text="Master" textAlignment="CENTER" wrapText="false">
-              <font>
-                <Font size="18.0" fx:id="x1" />
-              </font>
-              <textFill>
-                <Color red="0.624" green="0.624" blue="0.624" fx:id="x2" />
-              </textFill>
-            </Label>
                   <Button fx:id="freeMotionButton" layoutX="8.0" layoutY="70.0" mnemonicParsing="false" onAction="#switchFreeMotion" prefHeight="39.0" prefWidth="214.0" text="Mouvement Libre">
                      <font>
                         <Font size="18.0" />
                      </font></Button>
-                  <Button layoutX="37.0" layoutY="495.0" mnemonicParsing="false" onAction="#switchToConnectionScene" text="Déconnexion" />
-                  <Button fx:id="recordPosititionButton" layoutX="8.0" layoutY="122.0" mnemonicParsing="false" onAction="#recordPosition" text="Enregistrer une position">
+                  <Button layoutX="14.0" layoutY="511.0" mnemonicParsing="false" onAction="#switchToConnectionScene" text="Déconnexion" />
+                  <Button fx:id="recordPosititionButton" layoutX="8.0" layoutY="122.0" mnemonicParsing="false" onAction="#recordPosition" prefHeight="35.0" prefWidth="214.0" text="Enregistrer une position">
                      <font>
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button layoutX="43.0" layoutY="431.0" mnemonicParsing="false" onAction="#resetIndexPosition" text="Reset Index Position">
+                  <Button layoutX="8.0" layoutY="432.0" mnemonicParsing="false" onAction="#resetIndexPosition" prefHeight="31.0" prefWidth="214.0" text="Reset Index Position">
                      <font>
                         <Font size="16.0" />
                      </font>
                   </Button>
-                  <Button layoutX="40.0" layoutY="206.0" mnemonicParsing="false" onAction="#moveRecordedPositions" text="Jouer la séquence">
+                  <Button layoutX="8.0" layoutY="205.0" mnemonicParsing="false" onAction="#moveRecordedPositions" prefHeight="35.0" prefWidth="214.0" text="Jouer la séquence">
                      <font>
                         <Font size="18.0" />
                      </font>
@@ -94,9 +87,66 @@
         <ScrollPane prefHeight="-1.0" prefWidth="-1.0">
           <content>
             <AnchorPane id="Content" minHeight="-1.0" minWidth="-1.0" prefHeight="545.0" prefWidth="430.0">
-              <children>
-                <Label alignment="CENTER" font="$x1" layoutX="14.0" layoutY="14.0" style="&#10;" text="View" textAlignment="CENTER" textFill="$x2" wrapText="false" />
-              </children>
+                     <children>
+                        <VBox alignment="CENTER" layoutX="7.0" layoutY="14.0" prefHeight="530.0" prefWidth="655.0">
+                           <children>
+                              <HBox prefHeight="340.0" prefWidth="655.0" />
+                              <HBox prefHeight="154.0" prefWidth="655.0" spacing="10.0">
+                                 <children>
+                                    <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                       <children>
+                                          <Label text="Axe 1" />
+                                          <Button mnemonicParsing="false" text="+" />
+                                          <TextField fx:id="axe1TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
+                                          <Button mnemonicParsing="false" text="-" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                       <children>
+                                          <Label text="Axe 2" />
+                                          <Button mnemonicParsing="false" text="+" />
+                                          <TextField fx:id="axe2TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
+                                          <Button mnemonicParsing="false" text="-" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                       <children>
+                                          <Label text="Axe 3" />
+                                          <Button mnemonicParsing="false" text="+" />
+                                          <TextField fx:id="axe3TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
+                                          <Button mnemonicParsing="false" text="-" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                       <children>
+                                          <Label text="Axe 4" />
+                                          <Button mnemonicParsing="false" text="+" />
+                                          <TextField fx:id="axe4TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
+                                          <Button mnemonicParsing="false" text="-" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                       <children>
+                                          <Label text="Axe 5" />
+                                          <Button mnemonicParsing="false" text="+" />
+                                          <TextField fx:id="axe5TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
+                                          <Button mnemonicParsing="false" text="-" />
+                                       </children>
+                                    </VBox>
+                                    <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                       <children>
+                                          <Label text="Axe 6" />
+                                          <Button mnemonicParsing="false" text="+" />
+                                          <TextField fx:id="axe6TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
+                                          <Button mnemonicParsing="false" text="-" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <Button fx:id="manualModeButton" alignment="CENTER" mnemonicParsing="false" text="CONFIRMER" />
+                           </children>
+                        </VBox>
+                     </children>
             </AnchorPane>
           </content>
         </ScrollPane>
