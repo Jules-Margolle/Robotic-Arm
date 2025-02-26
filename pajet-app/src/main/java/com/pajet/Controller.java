@@ -31,7 +31,20 @@ public class Controller {
     private TextField portField;
     @FXML
     private Label connectionError;
-
+    @FXML
+    private Button manualModeButton;
+    @FXML
+    private TextField axe1TextField;
+    @FXML
+    private TextField axe2TextField;
+    @FXML
+    private TextField axe3TextField;
+    @FXML
+    private TextField axe4TextField;
+    @FXML
+    private TextField axe5TextField;
+    @FXML
+    private TextField axe6TextField;
      
     /* 
     public void switchToMainScene(ActionEvent event) throws Exception
@@ -95,6 +108,14 @@ public class Controller {
     public void resetIndexPosition()
     {
         io.toNetwork("3");
+    }
+
+    public void sendCoord()
+    {
+        String data = axe1TextField.getText() + "/" + axe2TextField.getText() + "/" + axe3TextField.getText() + "/" + axe4TextField.getText() + "/" + axe5TextField.getText() + "/" + axe6TextField.getText();
+        System.out.println(data);
+        io.toNetwork(data);
+
     }
 
     public void moveRecordedPositions()

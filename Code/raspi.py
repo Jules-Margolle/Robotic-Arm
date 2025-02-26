@@ -1,11 +1,11 @@
 import smbus
 import time
-import RPi.GPIO as GPIO
+
 import numpy as np
 import math
 from scipy.optimize import fsolve
 
-# Adresse I2C de l'Arduino
+#Adresse I2C de l'Arduino
 ARDUINO_I2C_ADDRESS = 0x08
 
 # Créer une instance de bus
@@ -44,78 +44,6 @@ def record_positions():
         elif command == "q":
             print("Fin de l'enregistrement.")
             break
-
-
-
-
-
-while True:
-    command = input("Entrez la commande : 0 pour détacher les servos\n" 
-                    +"1 pour attacher les servos\n"
-                    +"2 pour enregistrer une position\n"
-                    +"3 pour remettre a zéro les positions\n"
-                    +"4 pour jouer la séquence enregistrée\n"
-                    +"5 pour bouger par rapport à la position finale\n"
-                    +"7 pour ouvrir la pince\n"
-                    +"8 pour fermer la pince\n")
-
-    if command == "1":
-        array_to_send = get_positions_to_send()
-        send_array(0, array_to_send)
-        print("Tableau envoyé :", array_to_send)
-
-    elif command == "2":
-        array_to_send = [0]
-        send_array(1, array_to_send)
-        feedback_array = read_feedback()
-        print("Tableau reçu :", feedback_array)
-
-    elif command == "3":
-        array_to_send = [0]
-        send_array(3, array_to_send)
-    
-    elif command == "4":
-        array_to_send = [0]
-        send_array(4, array_to_send)
-
-    elif command == "5":
-        x = input("Entrez le x :")
-        print("\n")
-        y = input("Entrez le y :")
-        print("\n")
-        z = input("Entrez le z :")
-        print("\n")
-        pitch = input("Entrez le pitch :")
-        print("\n")
-        roll = input("Entrez le roll :")
-        print("\n")
-        yaw = input("Entrez le yaw :")
-        print("\n")
-        move_final_pose([x, y, z], pitch, roll, yaw)
-        send_array(5, array_to_send)
-
-    elif command == "6":
-        array_to_send = [0]
-        send_array(6, array_to_send)
-    elif command == "7":
-        array_to_send = [0]
-        send_array(7, array_to_send)
-    elif command == "8":
-        array_to_send = [0]
-        send_array(8, array_to_send)
-
-"""
-    # Une fois les positions enregistrées, envoyez-les à l'Arduino si nécessaire
-    if len(positions) > 0:
-        send_array(2, [len(positions)])
-        for pos in positions:
-            tab = [pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7]]
-            send_array(40, tab)  # Envoyer chaque position à l'Arduino
-            while GPIO.input(REACHED_POSITION) == GPIO.LOW:
-                time.sleep(0.1)
-            
-        positions.clear()  # Réinitialiser le tableau des positions
-"""
 
 
 
@@ -184,32 +112,47 @@ def compute_wrist_position(rotation_matrix, position_vector, d6):
     wrist_position = position_vector - d6 * Z6
     return wrist_position
 
-def calculer_angles(wrist, theta1):
+def calculer_angles(wrist, theta1_deg):
     """
-    Calcule les angles theta2 et theta3 à partir des coordonnées du poignet.
-    (Méthode simplifiée basée sur une résolution géométrique)
-    
+    Calcule les angles theta2 et theta3 à partir des coordonnées du poignet.    
     :param wrist: Coordonnées (x, z) du poignet
     :param theta1: Premier angle (déjà calculé) en degrés
     :return: theta2 et theta3 en degrés
     """
-    # On considère ici un point intermédiaire (par exemple, l'origine de la projection)
-    x1, y1 = 0, 197.3
-    x2, y2 = wrist
-    
-    if x2 - x1 == 0:
-        theta2_part1 = 90.0
-    else:
-        theta2_part1 = np.degrees(math.atan((y2 - y1) / (x2 - x1)))
-    theta2 = theta2_part1 - 90
-
-    if x2 - x1 == 0:
-        theta3_part2 = 0.0
-    else:
-        theta3_part2 = np.degrees(math.atan((y2 - y1) / (x2 - x1)))
-    theta3 = theta3_part2 
-    
-    return -theta2, theta3
+   
+    a2 = 190.2
+    a3 = 247.6
+    d1 = 197.3
+   
+   
+    X_w,Y_w,Z_w = wrist
+   
+    theta1_rad = np.radians(theta1_deg)
+   
+    # Calcul de r
+    r = np.sqrt(X_w**2 + Y_w**2)
+   
+    # Calcul de theta3
+    num = r**2 + (Z_w - d1)**2 - a2**2 - a3**2
+    den = 2 * a2 * a3
+    cos_theta3 = num / den
+   
+    # Vérification des valeurs possibles pour éviter des erreurs d'arc cos
+    if cos_theta3 < -1 or cos_theta3 > 1:
+        print("Impossible de calculer theta3, vérifier les entrées")
+   
+    theta3_rad = -np.arccos(cos_theta3)  # Solution positive
+   
+    # Calcul de theta2
+    term1 = np.arctan2(Z_w - d1, r)
+    term2 = np.arctan2(a3 * np.sin(theta3_rad), a2 + a3 * np.cos(theta3_rad))
+    theta2_rad = term1 - term2
+   
+    # Convertir en degrés
+    theta2 = np.degrees(theta2_rad)
+    theta3 = np.degrees(theta3_rad)
+   
+    return -(theta2-90), -theta3
 
 def compute_joint_angles(wrist_position):
     """
@@ -261,42 +204,48 @@ def compute_R0_3(theta1, theta2, theta3):
 def compute_wrist_angles(R0_6, theta1, theta2, theta3):
     """
     Calcule les 3 derniers angles (theta4, theta5, theta6) du robot.
-    
+   
     La procédure est la suivante :
       1. Calcul de la matrice R0_3 à partir des trois premiers angles.
       2. Calcul de la matrice de rotation résiduelle du poignet : R3_6 = (R0_3)^T * R0_6.
       3. Extraction des angles en supposant que R3_6 se décompose en Rz(theta4) * Ry(theta5) * Rz(theta6).
-    
+   
     :param R0_6: Matrice de rotation de l'effecteur final (issue de compute_rotation_matrix)
     :param theta1: Premier angle (en degrés)
     :param theta2: Deuxième angle (en degrés)
     :param theta3: Troisième angle (en degrés)
     :return: theta4, theta5, theta6 en degrés
     """
-    R0_3 = compute_R0_3(theta1, theta2, theta3)
-    # Comme les matrices de rotation sont orthogonales, l'inverse vaut la transposée
-    R3_6 = R0_3.T @ R0_6
-
-    # Extraction des angles selon la décomposition Rz * Ry * Rz
-    # On a : R3_6[2,2] = cos(theta5)
-    theta5 = math.acos(np.clip(R3_6[2,2], -1.0, 1.0))
-    
-    # Pour éviter les problèmes de division par zéro (singularité si sin(theta5) ≈ 0)
-    if abs(math.sin(theta5)) < 1e-6:
-        theta4 = 0
-        theta6 = math.atan2(-R3_6[2,1], R3_6[2,0])
-    else:
-        # R3_6[0,2] = cos(theta4)*sin(theta5) et R3_6[1,2] = sin(theta4)*sin(theta5)
-        theta4 = math.atan2(R3_6[1,2], R3_6[0,2])
-        # R3_6[2,0] = -sin(theta5)*cos(theta6) et R3_6[2,1] = sin(theta5)*sin(theta6)
-        theta6 = math.atan2(R3_6[2,1], -R3_6[2,0])
-    
-    # Conversion en degrés
-    theta4 = np.degrees(theta4) % 360
-    theta5 = np.degrees(theta5) % 360
-    theta6 = np.degrees(theta6) % 360
-    
-    return theta4, theta5, theta6
+   
+    theta1_rad = np.radians(theta1)
+    theta2_rad = np.radians(theta2)
+    theta3_rad = np.radians(theta3)
+   
+ # Calcul de la matrice de rotation de l'effecteur
+    R_roll = np.array([[1, 0, 0], [0, np.cos(np.radians(roll)), -np.sin(np.radians(roll))], [0, np.sin(np.radians(roll)), np.cos(np.radians(roll))]])
+    R_pitch = np.array([[np.cos(np.radians(pitch)), 0, np.sin(np.radians(pitch))], [0, 1, 0], [-np.sin(np.radians(pitch)), 0, np.cos(np.radians(pitch))]])
+    R_yaw = np.array([[np.cos(np.radians(yaw)), -np.sin(np.radians(yaw)), 0], [np.sin(np.radians(yaw)), np.cos(np.radians(yaw)), 0], [0, 0, 1]])
+   
+    R_6_0 = R_yaw @ R_pitch @ R_roll
+   
+    # Calcul de la matrice de rotation du poignet
+    R_3_0 = np.array([[np.cos(theta1_rad) * np.cos(theta2_rad + theta3_rad), -np.cos(theta1_rad) * np.sin(theta2_rad + theta3_rad), np.sin(theta1_rad)],
+                       [np.sin(theta1_rad) * np.cos(theta2_rad + theta3_rad), -np.sin(theta1_rad) * np.sin(theta2_rad + theta3_rad), -np.cos(theta1_rad)],
+                       [np.sin(theta2_rad + theta3_rad), np.cos(theta2_rad + theta3_rad), 0]])
+   
+    R_6_3 = np.linalg.inv(R_3_0) @ R_6_0
+   
+    # Extraction des angles theta4, theta5, theta6
+    theta4_rad = np.arctan2(R_6_3[1, 2], R_6_3[0, 2])
+    theta5_rad = np.arccos(R_6_3[2, 2])
+    theta6_rad = np.arctan2(R_6_3[2, 1], -R_6_3[2, 0])
+   
+    theta4_deg = np.degrees(theta4_rad)
+    theta5_deg = np.degrees(theta5_rad)
+    theta6_deg = np.degrees(theta6_rad)
+   
+   
+    return -theta4_deg+90, theta5_deg-90, theta6_deg+90
 
 # def map_value(x, in_min, in_max, out_min, out_max):
 #     """
@@ -316,17 +265,26 @@ def compute_wrist_angles(R0_6, theta1, theta2, theta3):
 def in_limite_robot(P_w,theta1,theta2,theta3):
     """
     Vérifie si un point est dans la zone de travail du robot.
-    
+   
     :param x: Coordonnée x du point
     :param y: Coordonnée y du point
     :param z: Coordonnée z du point
     :return: True si le point est dans la zone de travail, False sinon
     """
+    if(theta2>0 and theta3<0):
+        theta3 = -theta3
+    elif(theta2<0) :
+        theta2 = -theta2
+       
+    #print("theta 1, 2,3",theta1,theta2,theta3)
     theta1 = np.radians(theta1)
     x, y, z = P_w
     max_x = 485.798*math.cos(theta1)
+    #print(max_x)
     max_y = 485.798*math.sin(theta1)
-    max_z = 197.3 + 190.2*math.sin(theta2)+247.6*math.sin(theta3)
+    #print(max_y)
+    max_z = 197.3 + 190.2*math.cos(np.radians(theta2))+247.6*math.cos(np.radians(theta3))
+    #print(max_z)
     if x <= max_x and y <= max_y and z <= max_z:
         return True
     else:
@@ -381,22 +339,114 @@ def move_final_pose(P6, pitch, roll, yaw):
 
     
     # Calcul des 3 premiers angles à partir de la position du poignet
+    k = 2
     theta1, theta2, theta3 = compute_joint_angles(P_w)
-    if in_limite_robot(P_w,0,0,0):
-        print(f"Le point est dans la zone de travail du robot\n")
-        print(f"Angles des 3 premiers joints : {[theta1, theta2, theta3]}\n") 
-        # Vérification avec la cinématique directe du bras
-        PS = compute_wrist_position_from_angle(theta1, theta2, theta3)
-        print(f"Position atteinte du poignet (cinématique directe du bras) : {PS}\n")
-        # Calcul des 3 derniers angles (orientation du poignet)
-        theta4, theta5, theta6 = compute_wrist_angles(R0_6, theta1, theta2, theta3)
-        theta1,theta2,theta3,theta4,theta5,theta6 = adapt_angle([theta1,theta2,theta3,theta4,theta5,theta6])
-        print(f"Angles des 3 derniers joints : {[theta4, theta5, theta6]}\n")
-        #angle_axe_mot = [map_value(theta1, -180, 180, 0, 180),-(90 - map_value(theta2, -180, 180, 0, 180))+90,(90 - map_value(theta2, -180, 180, 0, 180))+ 90, -(90 - map_value(theta3, -180, 180, 0, 180))+90,(90 - map_value(theta3, -180, 180, 0, 180))+ 90, map_value(theta4, 1800, 180, 0, 180),map_value(theta5, -180, 180, 0, 180), map_value(theta6,-180, 180, 0, 180)]
-       # print("Angle des moteurs : ", angle_axe_mot)
-        # Conversion des angles pour les moteurs
-        angle = [map_angle_to_motor_command(theta1),-(90 - map_angle_to_motor_command(theta2))+90,(90 - map_angle_to_motor_command(theta2))+90,-(90 - map_angle_to_motor_command(theta3))+90 ,(90- map_angle_to_motor_command(theta3))+90,map_angle_to_motor_command(theta4), map_angle_to_motor_command(theta5), map_angle_to_motor_command(theta6)]
-        print("Angle des moteurs : ", angle)
+
+    
+    #if in_limite_robot(P_w,0,0,0):
+    print(f"Le point est dans la zone de travail du robot\n")
+    print(f"Angles des 3 premiers joints : {[theta1, theta2, theta3]}\n") 
+    # Vérification avec la cinématique directe du bras
+    PS = compute_wrist_position_from_angle(theta1, theta2, theta3)
+    print(f"Position atteinte du poignet (cinématique directe du bras) : {PS}\n")
+    # Calcul des 3 derniers angles (orientation du poignet)
+    theta4, theta5, theta6 = compute_wrist_angles(R0_6, theta1, theta2, theta3)
+    theta1,theta2,theta3,theta4,theta5,theta6 = adapt_angle([theta1,theta2,theta3,theta4,theta5,theta6])
+    print(f"Angles des 3 derniers joints : {[theta4, theta5, theta6]}\n")
+    #angle_axe_mot = [map_value(theta1, -180, 180, 0, 180),-(90 - map_value(theta2, -180, 180, 0, 180))+90,(90 - map_value(theta2, -180, 180, 0, 180))+ 90, -(90 - map_value(theta3, -180, 180, 0, 180))+90,(90 - map_value(theta3, -180, 180, 0, 180))+ 90, map_value(theta4, 1800, 180, 0, 180),map_value(theta5, -180, 180, 0, 180), map_value(theta6,-180, 180, 0, 180)]
+    # print("Angle des moteurs : ", angle_axe_mot)
+    # Conversion des angles pour les moteurs
+    #theta2 = theta2 + k*math.sin(theta2)
+    angle = [map_angle_to_motor_command(theta1),-(90 - map_angle_to_motor_command(theta2))+90,(90 - map_angle_to_motor_command(theta2))+90,-(90 - map_angle_to_motor_command(theta3))+90 ,(90- map_angle_to_motor_command(theta3))+90,map_angle_to_motor_command(theta4), map_angle_to_motor_command(theta5), map_angle_to_motor_command(theta6)]
+    print("Angle des moteurs : ", angle)
+
+    return angle
+    """
     else :
         print("Le point est en dehors de la zone de travaille du robot\n")
+        return 0"""
+
+
+
+
+
+
+
+
+
+
+while True:
+    command = input("Entrez la commande : 0 pour détacher les servos\n" 
+                    +"1 pour attacher les servos\n"
+                    +"2 pour enregistrer une position\n"
+                    +"3 pour remettre a zéro les positions\n"
+                    +"4 pour jouer la séquence enregistrée\n"
+                    +"5 pour bouger par rapport à la position finale\n"
+                    +"7 pour ouvrir la pince\n"
+                    +"8 pour fermer la pince\n")
+
+    if command == "1":
+        array_to_send = get_positions_to_send()
+        send_array(0, array_to_send)
+        print("Tableau envoyé :", array_to_send)
+
+    elif command == "2":
+        array_to_send = [0]
+        send_array(1, array_to_send)
+        feedback_array = read_feedback()
+        print("Tableau reçu :", feedback_array)
+
+    elif command == "3":
+        array_to_send = [0]
+        send_array(3, array_to_send)
+    
+    elif command == "4":
+        array_to_send = [0]
+        send_array(4, array_to_send)
+
+    elif command == "5":
+        x = float(input("Entrez le x :"))
+        print("\n")
+        y = float(input("Entrez le y :"))
+        print("\n")
+        z = float(input("Entrez le z :"))
+        print("\n")
+        pitch = float(input("Entrez le pitch :"))
+        print("\n")
+        roll = float(input("Entrez le roll :"))
+        print("\n")
+        yaw = float(input("Entrez le yaw :"))
+        print("\n")
+        angle = move_final_pose([x, y, z], pitch, roll, yaw)
+        send_array(5, angle)
+
+    elif command == "6":
+        array_to_send = [0]
+        send_array(6, array_to_send)
+    elif command == "7":
+        array_to_send = [0]
+        send_array(7, array_to_send)
+    elif command == "8":
+        array_to_send = [0]
+        send_array(8, array_to_send)
+
+
+
+"""
+    # Une fois les positions enregistrées, envoyez-les à l'Arduino si nécessaire
+    if len(positions) > 0:
+        send_array(2, [len(positions)])
+        for pos in positions:
+            tab = [pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7]]
+            send_array(40, tab)  # Envoyer chaque position à l'Arduino
+            while GPIO.input(REACHED_POSITION) == GPIO.LOW:
+                time.sleep(0.1)
+            
+        positions.clear()  # Réinitialiser le tableau des positions
+"""
+
+
+
+
+
 

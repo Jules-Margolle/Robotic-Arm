@@ -235,8 +235,13 @@ void loop() {
         delay(1000);
       }
       indexRecordedPositions = 0;
+    
+    }
+    else if(receivedArray[0] == 5)
+    {
+      Serial.println(target);
+      //move(target);
 
-      
     }
     else if(receivedArray[0] == 7)
     {

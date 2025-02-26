@@ -1,13 +1,346 @@
 import socket
-import smbus
+#import smbus
 import time
-import Gen_BDD_para
+import numpy as np
+import math
+
 
 ARDUINO_I2C_ADDRESS = 0x08
-bus = smbus.SMBus(1)
+#bus = smbus.SMBus(1)
 
-host = '192.168.1.17'
+host = '127.0.0.1'
 port = 12345
+
+
+
+
+def compute_rotation_matrix(yaw, pitch, roll):
+    """
+    Construit la matrice de rotation 3x3 à partir des angles d'Euler (yaw, pitch, roll).
+    Les rotations sont effectuées dans l'ordre Z (yaw), Y (pitch), X (roll).
+    
+    :param yaw: Rotation autour de l'axe Z (en radians)
+    :param pitch: Rotation autour de l'axe Y (en radians)
+    :param roll: Rotation autour de l'axe X (en radians)
+    :return: Matrice de rotation 3x3
+    """
+    Rz = np.array([[np.cos(yaw), -np.sin(yaw), 0],
+                   [np.sin(yaw),  np.cos(yaw), 0],
+                   [0,            0,           1]])
+    
+    Ry = np.array([[np.cos(pitch), 0, np.sin(pitch)],
+                   [0,             1, 0],
+                   [-np.sin(pitch),0, np.cos(pitch)]])
+    
+    Rx = np.array([[1, 0,            0],
+                   [0, np.cos(roll), -np.sin(roll)],
+                   [0, np.sin(roll),  np.cos(roll)]])
+    
+    return Rz @ Ry @ Rx
+
+def compute_wrist_position_from_angle(theta1, theta2, theta3):
+    """
+    Calcule la position du poignet à partir des 3 premiers angles du robot.
+    
+    Ces équations utilisent les paramètres géométriques du robot.
+    
+    :param theta1: Angle (en degrés) autour de l'axe vertical.
+    :param theta2: Angle (en degrés) du joint 2.
+    :param theta3: Angle (en degrés) du joint 3.
+    :return: Vecteur numpy [X_w, Y_w, Z_w] représentant la position du poignet
+    """
+    # Conversion en radians
+    theta1_rad = np.radians(theta1)
+    theta2_rad = np.radians(theta2)
+    theta3_rad = np.radians(theta3)
+    
+    # Paramètres géométriques (exprimés en mm)
+    a2 = 190.2
+    a3 = 247.6
+    d1 = 197.3
+    
+    X_w = np.cos(theta1_rad) * (a2 * np.sin(theta2_rad) + a3 * np.sin(theta2_rad + theta3_rad))
+    Y_w = np.sin(theta1_rad) * (a2 * np.sin(theta2_rad) + a3 * np.sin(theta2_rad + theta3_rad))
+    Z_w = d1 + (a2 * np.cos(theta2_rad) + a3 * np.cos(theta2_rad + theta3_rad))
+    
+    return np.array([X_w, Y_w, Z_w])
+
+def compute_wrist_position(rotation_matrix, position_vector, d6):
+    """
+    Calcule la position du poignet sphérique à partir de la position de l'effecteur final.
+    
+    :param rotation_matrix: Matrice de rotation 3x3 de l'effecteur final
+    :param position_vector: Vecteur 3x1 représentant la position de l'effecteur final (X, Y, Z)
+    :param d6: Décalage entre l'effecteur final et le centre du poignet
+    :return: Vecteur 3x1 représentant la position du poignet sphérique (X_w, Y_w, Z_w)
+    """
+    # Le vecteur Z6 est la troisième colonne de la matrice de rotation
+    Z6 = rotation_matrix[:, 2]
+    wrist_position = position_vector - d6 * Z6
+    return wrist_position
+
+def calculer_angles(wrist, theta1_deg):
+    """
+    Calcule les angles theta2 et theta3 à partir des coordonnées du poignet.    
+    :param wrist: Coordonnées (x, z) du poignet
+    :param theta1: Premier angle (déjà calculé) en degrés
+    :return: theta2 et theta3 en degrés
+    """
+   
+    a2 = 190.2
+    a3 = 247.6
+    d1 = 197.3
+   
+   
+    X_w,Y_w,Z_w = wrist
+   
+    theta1_rad = np.radians(theta1_deg)
+   
+    # Calcul de r
+    r = np.sqrt(X_w**2 + Y_w**2)
+   
+    # Calcul de theta3
+    num = r**2 + (Z_w - d1)**2 - a2**2 - a3**2
+    den = 2 * a2 * a3
+    cos_theta3 = num / den
+   
+    # Vérification des valeurs possibles pour éviter des erreurs d'arc cos
+    if cos_theta3 < -1 or cos_theta3 > 1:
+        print("Impossible de calculer theta3, vérifier les entrées")
+   
+    theta3_rad = -np.arccos(cos_theta3)  # Solution positive
+   
+    # Calcul de theta2
+    term1 = np.arctan2(Z_w - d1, r)
+    term2 = np.arctan2(a3 * np.sin(theta3_rad), a2 + a3 * np.cos(theta3_rad))
+    theta2_rad = term1 - term2
+   
+    # Convertir en degrés
+    theta2 = np.degrees(theta2_rad)
+    theta3 = np.degrees(theta3_rad)
+   
+    return -(theta2-90), -theta3
+
+def compute_joint_angles(wrist_position):
+    """
+    Calcule les angles theta1, theta2, theta3 à partir de la position du poignet.
+    
+    :param wrist_position: Vecteur 3x1 (X_w, Y_w, Z_w)
+    :return: theta1, theta2, theta3 en degrés
+    """
+    X_w, Y_w, Z_w = wrist_position
+    
+    # Calcul de theta1 (rotation autour de l'axe vertical)
+    theta1 = np.degrees(np.arctan2(Y_w, X_w)) % 360
+    
+    # Pour theta2 et theta3, on travaille dans le plan (X, Z)
+    theta2, theta3 = calculer_angles(wrist_position, theta1)
+    
+    return theta1, theta2, theta3
+
+def compute_R0_3(theta1, theta2, theta3):
+    """
+    Calcule la matrice de rotation de la base au joint 3
+    en supposant :
+      - rotation du joint 1 autour de Z
+      - rotations des joints 2 et 3 autour de Y
+    
+    :param theta1: Angle du joint 1 (en degrés)
+    :param theta2: Angle du joint 2 (en degrés)
+    :param theta3: Angle du joint 3 (en degrés)
+    :return: Matrice 3x3 R0_3
+    """
+    theta1_rad = np.radians(theta1)
+    theta2_rad = np.radians(theta2)
+    theta3_rad = np.radians(theta3)
+    
+    Rz = np.array([[np.cos(theta1_rad), -np.sin(theta1_rad), 0],
+                   [np.sin(theta1_rad),  np.cos(theta1_rad), 0],
+                   [0,                   0,                  1]])
+    
+    Ry2 = np.array([[np.cos(theta2_rad), 0, np.sin(theta2_rad)],
+                    [0,                  1, 0],
+                    [-np.sin(theta2_rad),0, np.cos(theta2_rad)]])
+    
+    Ry3 = np.array([[np.cos(theta3_rad), 0, np.sin(theta3_rad)],
+                    [0,                  1, 0],
+                    [-np.sin(theta3_rad),0, np.cos(theta3_rad)]])
+    
+    return Rz @ Ry2 @ Ry3
+
+def compute_wrist_angles(R0_6, theta1, theta2, theta3):
+    """
+    Calcule les 3 derniers angles (theta4, theta5, theta6) du robot.
+   
+    La procédure est la suivante :
+      1. Calcul de la matrice R0_3 à partir des trois premiers angles.
+      2. Calcul de la matrice de rotation résiduelle du poignet : R3_6 = (R0_3)^T * R0_6.
+      3. Extraction des angles en supposant que R3_6 se décompose en Rz(theta4) * Ry(theta5) * Rz(theta6).
+   
+    :param R0_6: Matrice de rotation de l'effecteur final (issue de compute_rotation_matrix)
+    :param theta1: Premier angle (en degrés)
+    :param theta2: Deuxième angle (en degrés)
+    :param theta3: Troisième angle (en degrés)
+    :return: theta4, theta5, theta6 en degrés
+    """
+   
+    theta1_rad = np.radians(theta1)
+    theta2_rad = np.radians(theta2)
+    theta3_rad = np.radians(theta3)
+    pitch = 90
+    roll = 0
+    yaw = 0
+ # Calcul de la matrice de rotation de l'effecteur
+    R_roll = np.array([[1, 0, 0], [0, np.cos(np.radians(roll)), -np.sin(np.radians(roll))], [0, np.sin(np.radians(roll)), np.cos(np.radians(roll))]])
+    R_pitch = np.array([[np.cos(np.radians(pitch)), 0, np.sin(np.radians(pitch))], [0, 1, 0], [-np.sin(np.radians(pitch)), 0, np.cos(np.radians(pitch))]])
+    R_yaw = np.array([[np.cos(np.radians(yaw)), -np.sin(np.radians(yaw)), 0], [np.sin(np.radians(yaw)), np.cos(np.radians(yaw)), 0], [0, 0, 1]])
+   
+    R_6_0 = R_yaw @ R_pitch @ R_roll
+   
+    # Calcul de la matrice de rotation du poignet
+    R_3_0 = np.array([[np.cos(theta1_rad) * np.cos(theta2_rad + theta3_rad), -np.cos(theta1_rad) * np.sin(theta2_rad + theta3_rad), np.sin(theta1_rad)],
+                       [np.sin(theta1_rad) * np.cos(theta2_rad + theta3_rad), -np.sin(theta1_rad) * np.sin(theta2_rad + theta3_rad), -np.cos(theta1_rad)],
+                       [np.sin(theta2_rad + theta3_rad), np.cos(theta2_rad + theta3_rad), 0]])
+   
+    R_6_3 = np.linalg.inv(R_3_0) @ R_6_0
+   
+    # Extraction des angles theta4, theta5, theta6
+    theta4_rad = np.arctan2(R_6_3[1, 2], R_6_3[0, 2])
+    theta5_rad = np.arccos(R_6_3[2, 2])
+    theta6_rad = np.arctan2(R_6_3[2, 1], -R_6_3[2, 0])
+   
+    theta4_deg = np.degrees(theta4_rad)
+    theta5_deg = np.degrees(theta5_rad)
+    theta6_deg = np.degrees(theta6_rad)
+   
+   
+    return -theta4_deg+90, theta5_deg-90, theta6_deg+90
+
+# def map_value(x, in_min, in_max, out_min, out_max):
+#     """
+#     Mappe une valeur x de l'intervalle [in_min, in_max] à l'intervalle [out_min, out_max].
+    
+#     :param x: La valeur à mapper
+#     :param in_min: La valeur minimale de l'intervalle d'entrée
+#     :param in_max: La valeur maximale de l'intervalle d'entrée
+#     :param out_min: La valeur minimale de l'intervalle de sortie
+#     :param out_max: La valeur maximale de l'intervalle de sortie
+#     :return: La valeur mappée dans l'intervalle de sortie
+#     """
+#     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
+
+def in_limite_robot(P_w,theta1,theta2,theta3):
+    """
+    Vérifie si un point est dans la zone de travail du robot.
+   
+    :param x: Coordonnée x du point
+    :param y: Coordonnée y du point
+    :param z: Coordonnée z du point
+    :return: True si le point est dans la zone de travail, False sinon
+    """
+    if(theta2>0 and theta3<0):
+        theta3 = -theta3
+    elif(theta2<0) :
+        theta2 = -theta2
+       
+    #print("theta 1, 2,3",theta1,theta2,theta3)
+    theta1 = np.radians(theta1)
+    x, y, z = P_w
+    max_x = 485.798*math.cos(theta1)
+    #print(max_x)
+    max_y = 485.798*math.sin(theta1)
+    #print(max_y)
+    max_z = 197.3 + 190.2*math.cos(np.radians(theta2))+247.6*math.cos(np.radians(theta3))
+    #print(max_z)
+    if x <= max_x and y <= max_y and z <= max_z:
+        return True
+    else:
+        return False
+    
+def adapt_angle(angle):
+    for i in range(len(angle)):
+        if(angle[i]>180):
+            angle[i] = -360 + angle[i]
+        elif(angle[i]<-180):
+            angle[i] = 360 - angle[i]
+    
+    return angle
+
+def map_angle_to_motor_command(input_angle):
+    # Plages d'entrée
+    input_min = -140
+    input_max = 140
+
+    # Plages de sortie
+    output_min = 0
+    output_max = 180
+
+    # Calcul de la commande du moteur
+    output_command = (input_angle - input_min) * (output_max - output_min) / (input_max - input_min) + output_min
+
+    # Limiter la sortie entre output_min et output_max
+    output_command = max(output_min, min(output_max, output_command))
+
+    return output_command
+
+# ------------------------------
+# Partie principale du programme
+# ------------------------------
+def move_final_pose(P6, pitch, roll, yaw):
+    #max x 485.798
+    #max z 683.098
+    # Données d'entrée
+    
+
+    # Conversion des angles d'orientation en radians pour la matrice de rotation
+    R0_6 = compute_rotation_matrix(np.deg2rad(yaw), np.deg2rad(pitch), np.deg2rad(roll))
+    
+    # Paramètres géométriques (mm)
+    d6 = 47.998
+
+    print("Position de l'effecteur final :", P6)
+    
+    # Calcul de la position du poignet
+    P_w = compute_wrist_position(R0_6, P6, d6)
+    print(f"\nPosition du poignet sphérique : {P_w}\n")
+
+    
+    # Calcul des 3 premiers angles à partir de la position du poignet
+    k = 2
+    theta1, theta2, theta3 = compute_joint_angles(P_w)
+
+    
+    #if in_limite_robot(P_w,0,0,0):
+    print(f"Le point est dans la zone de travail du robot\n")
+    print(f"Angles des 3 premiers joints : {[theta1, theta2, theta3]}\n") 
+    # Vérification avec la cinématique directe du bras
+    PS = compute_wrist_position_from_angle(theta1, theta2, theta3)
+    print(f"Position atteinte du poignet (cinématique directe du bras) : {PS}\n")
+    # Calcul des 3 derniers angles (orientation du poignet)
+    theta4, theta5, theta6 = compute_wrist_angles(R0_6, theta1, theta2, theta3)
+    theta1,theta2,theta3,theta4,theta5,theta6 = adapt_angle([theta1,theta2,theta3,theta4,theta5,theta6])
+    print(f"Angles des 3 derniers joints : {[theta4, theta5, theta6]}\n")
+    #angle_axe_mot = [map_value(theta1, -180, 180, 0, 180),-(90 - map_value(theta2, -180, 180, 0, 180))+90,(90 - map_value(theta2, -180, 180, 0, 180))+ 90, -(90 - map_value(theta3, -180, 180, 0, 180))+90,(90 - map_value(theta3, -180, 180, 0, 180))+ 90, map_value(theta4, 1800, 180, 0, 180),map_value(theta5, -180, 180, 0, 180), map_value(theta6,-180, 180, 0, 180)]
+    # print("Angle des moteurs : ", angle_axe_mot)
+    # Conversion des angles pour les moteurs
+    #theta2 = theta2 + k*math.sin(theta2)
+    angle = [map_angle_to_motor_command(theta1),-(90 - map_angle_to_motor_command(theta2))+90,(90 - map_angle_to_motor_command(theta2))+90,-(90 - map_angle_to_motor_command(theta3))+90 ,(90- map_angle_to_motor_command(theta3))+90,map_angle_to_motor_command(theta4), map_angle_to_motor_command(theta5), map_angle_to_motor_command(theta6)]
+    print("Angle des moteurs : ", angle)
+
+    return angle
+    """
+    else :
+        print("Le point est en dehors de la zone de travaille du robot\n")
+        return 0"""
+
+
+
+
+
+
+
 
 def send_array(command, array):
     
@@ -22,8 +355,15 @@ def read_feedback():
 
 
 def data_handler(data):
+    
+    cut_data = data.split("")
+    #angle = move_final_pose([int(cut_data[0]),int(cut_data[1]),int(cut_data[2])], int(cut_data[3]),int(cut_data[4]),int(cut_data[5]),)
+    for element in cut_data:
+        print(element)
+    """
     array_to_send = [0]
     send_array(int(data), array_to_send)
+    """
 
 #def send_to_client():
 
@@ -36,12 +376,20 @@ def handle_client(client_socket, client_address):
         while True:
 
             data = client_socket.recv(1024)
-            if data:
+            data = data.decode('utf-8').strip()
+            if len(data) < 3:
                 if int(data) != 100:
                     print(f"Message reçu : {data.decode('utf-8')}")
                     data_handler(data.decode('utf-8'))
-                else :
-                    send_to_client()
+            
+            else:
+                print("entrée du else")
+                cut_data = data.split("/")
+                for element in cut_data:
+                    print(element)
+                angle = move_final_pose([int(cut_data[0]),int(cut_data[1]),int(cut_data[2])], int(cut_data[3]),int(cut_data[4]),int(cut_data[5]))
+                print("5 " + angle)
+                
             
 
     except (ConnectionResetError, BrokenPipeError):
