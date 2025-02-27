@@ -239,6 +239,11 @@ void loop() {
     }
     else if(receivedArray[0] == 5)
     {
+      
+      for(int i = 0; i<8; i++)
+      {
+        target[i] = target[i] / 1000
+      }
       Serial.println(target);
       //move(target);
 

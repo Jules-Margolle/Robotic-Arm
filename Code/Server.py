@@ -355,15 +355,9 @@ def read_feedback():
 
 
 def data_handler(data):
-    
-    cut_data = data.split("")
-    #angle = move_final_pose([int(cut_data[0]),int(cut_data[1]),int(cut_data[2])], int(cut_data[3]),int(cut_data[4]),int(cut_data[5]),)
-    for element in cut_data:
-        print(element)
-    """
     array_to_send = [0]
     send_array(int(data), array_to_send)
-    """
+
 
 #def send_to_client():
 
@@ -388,7 +382,7 @@ def handle_client(client_socket, client_address):
                 for element in cut_data:
                     print(element)
                 angle = move_final_pose([int(cut_data[0]),int(cut_data[1]),int(cut_data[2])], int(cut_data[3]),int(cut_data[4]),int(cut_data[5]))
-                print("5 " + angle)
+                send_array(5,angle)
                 
             
 
