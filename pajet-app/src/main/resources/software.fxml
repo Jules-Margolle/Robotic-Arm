@@ -82,6 +82,13 @@
                         <Font size="18.0" />
                      </font>
                   </Button>
+                  <TextField fx:id="stepTextField" layoutX="23.0" layoutY="329.0" prefHeight="26.0" prefWidth="89.0" />
+                  <Label layoutX="23.0" layoutY="300.0" text="Pas : ">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Label>
+                  <Button layoutX="129.0" layoutY="330.0" mnemonicParsing="false" onAction="#setStep" text="Confirmer" />
           </children>
         </AnchorPane>
         <ScrollPane prefHeight="-1.0" prefWidth="-1.0">
@@ -95,50 +102,50 @@
                                  <children>
                                     <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                        <children>
-                                          <Label text="Axe 1" />
-                                          <Button mnemonicParsing="false" text="+" />
-                                          <TextField fx:id="axe1TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
-                                          <Button mnemonicParsing="false" text="-" />
+                                          <Label text="Axe X" />
+                                          <Button mnemonicParsing="false" onAction="#addX" text="+" />
+                                          <TextField fx:id="axe1TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" text="0" />
+                                          <Button mnemonicParsing="false" onAction="#removeX" text="-" />
                                        </children>
                                     </VBox>
                                     <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                        <children>
-                                          <Label text="Axe 2" />
-                                          <Button mnemonicParsing="false" text="+" />
-                                          <TextField fx:id="axe2TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
-                                          <Button mnemonicParsing="false" text="-" />
+                                          <Label text="Axe Y" />
+                                          <Button mnemonicParsing="false" onAction="#addY" text="+" />
+                                          <TextField fx:id="axe2TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" text="0" />
+                                          <Button mnemonicParsing="false" onAction="#removeY" text="-" />
                                        </children>
                                     </VBox>
                                     <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                        <children>
-                                          <Label text="Axe 3" />
-                                          <Button mnemonicParsing="false" text="+" />
-                                          <TextField fx:id="axe3TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
-                                          <Button mnemonicParsing="false" text="-" />
+                                          <Label text="Axe Z" />
+                                          <Button mnemonicParsing="false" onAction="#addZ" text="+" />
+                                          <TextField fx:id="axe3TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" text="683.098" />
+                                          <Button mnemonicParsing="false" onAction="#removeZ" text="-" />
                                        </children>
                                     </VBox>
                                     <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                        <children>
-                                          <Label text="Axe 4" />
-                                          <Button mnemonicParsing="false" text="+" />
-                                          <TextField fx:id="axe4TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
-                                          <Button mnemonicParsing="false" text="-" />
+                                          <Label text="Pitch" />
+                                          <Button mnemonicParsing="false" onAction="#addP" text="+" />
+                                          <TextField fx:id="axe4TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" text="0" />
+                                          <Button mnemonicParsing="false" onAction="#removeP" text="-" />
                                        </children>
                                     </VBox>
                                     <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                        <children>
-                                          <Label text="Axe 5" />
-                                          <Button mnemonicParsing="false" text="+" />
-                                          <TextField fx:id="axe5TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
-                                          <Button mnemonicParsing="false" text="-" />
+                                          <Label text="Roll" />
+                                          <Button mnemonicParsing="false" onAction="#addR" text="+" />
+                                          <TextField fx:id="axe5TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" text="0" />
+                                          <Button mnemonicParsing="false" onAction="#removeR" text="-" />
                                        </children>
                                     </VBox>
                                     <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                        <children>
-                                          <Label text="Axe 6" />
-                                          <Button mnemonicParsing="false" text="+" />
-                                          <TextField fx:id="axe6TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" />
-                                          <Button mnemonicParsing="false" text="-" />
+                                          <Label text="Yaw" />
+                                          <Button mnemonicParsing="false" onAction="#addYaw" text="+" />
+                                          <TextField fx:id="axe6TextField" minHeight="-Infinity" minWidth="-Infinity" prefHeight="26.0" prefWidth="75.0" text="0" />
+                                          <Button mnemonicParsing="false" onAction="#removeYaw" text="-" />
                                        </children>
                                     </VBox>
                                  </children>

@@ -45,8 +45,22 @@ public class Controller {
     private TextField axe5TextField;
     @FXML
     private TextField axe6TextField;
-     
-    /* 
+    @FXML
+    private TextField stepTextField;
+
+    private String[] chaineCoupee = {"0","0","683.098", "0","0", "0"};
+    private int step = 0;
+
+    public void start()
+    {
+        axe1TextField.setText("0");
+        axe2TextField.setText("0");
+        axe3TextField.setText("683.098");
+        axe4TextField.setText("0");
+        axe6TextField.setText("0");
+    }
+
+    
     public void switchToMainScene(ActionEvent event) throws Exception
     {
         String ip = ipField.getText();
@@ -61,6 +75,7 @@ public class Controller {
             stage = (Stage)((Node)event.getSource()).getScene().getWindow();
             scene = new Scene(root);
             stage.setScene(scene);
+            start();
             stage.show();
             
         }
@@ -71,7 +86,7 @@ public class Controller {
         }
         
         
-    }*/
+    }
 
     public void switchToConnectionScene(ActionEvent event) throws Exception
     {
@@ -100,6 +115,11 @@ public class Controller {
 
     }
 
+    public void setStep()
+    {
+        step = Integer.parseInt(stepTextField.getText());
+    }
+
     public void recordPosition()
     {
         io.toNetwork("2");
@@ -114,8 +134,13 @@ public class Controller {
     {
         String data = axe1TextField.getText() + "/" + axe2TextField.getText() + "/" + axe3TextField.getText() + "/" + axe4TextField.getText() + "/" + axe5TextField.getText() + "/" + axe6TextField.getText();
         System.out.println(data);
+        chaineCoupee[0] = axe1TextField.getText();
+        chaineCoupee[1] = axe2TextField.getText();
+        chaineCoupee[2] = axe3TextField.getText();
+        chaineCoupee[3] = axe4TextField.getText();
+        chaineCoupee[4] = axe5TextField.getText();
+        chaineCoupee[5] = axe6TextField.getText();
         io.toNetwork(data);
-
     }
 
     public void moveRecordedPositions()
@@ -125,5 +150,77 @@ public class Controller {
             switchFreeMotion();
         }
         io.toNetwork("4");
+    }
+
+    public void addX()
+    {
+        axe1TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[0]) + step));
+        sendCoord();
+    }
+
+    public void removeX()
+    {
+        axe1TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[0]) - step));
+        sendCoord();
+    }
+
+    public void addY()
+    {
+        axe2TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[1]) + step));
+        sendCoord();
+    }
+
+    public void removeY()
+    {
+        axe2TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[1]) - step));
+        sendCoord();
+    }
+
+    public void addZ()
+    {
+        axe3TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[2]) + step));
+        sendCoord();
+    }
+
+    public void removeZ()
+    {
+        axe3TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[2]) - step));
+        sendCoord();
+    }
+
+    public void addP()
+    {
+        axe4TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[3]) + step));
+        sendCoord();
+    }
+
+    public void removeP()
+    {
+        axe4TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[3]) - step));
+        sendCoord();
+    }
+
+    public void addR()
+    {
+        axe5TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[4]) + step));
+        sendCoord();
+    }
+
+    public void removeR()
+    {
+        axe5TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[4]) - step));
+        sendCoord();
+    }
+
+    public void addYaw()
+    {
+        axe6TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[5]) + step));
+        sendCoord();
+    }
+
+    public void removeYaw()
+    {
+        axe6TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[5]) - step));
+        sendCoord();
     }
 }

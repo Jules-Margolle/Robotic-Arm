@@ -34,6 +34,7 @@ short int speedDelay = 50;
 
 short int receivedArray[100]; // Tableau pour stocker les données reçues
 short int target[8];
+short int targetMoinUn[8];
 short int recordedPositions[100][8];
 int indexRecordedPositions = 0;
 int receivedInt = 0;
@@ -109,7 +110,7 @@ void recordPositions(){
   Serial.println("");
 }
 
-void move(short int TargetAngle[]){
+void move(short int TargetAngle[], short int actualPosition[]){
 
 
   short int positionServo[8];
@@ -117,7 +118,7 @@ void move(short int TargetAngle[]){
   unsigned short int cpt = 0;
   feedback();
   for(j = 0; j<7;j++){
-    positionServo[j] = fd[j];
+    positionServo[j] = actualPosition[j];
   }
   // positionServo = recordPosition();
   while(cpt <= 6){ // creer une boucle qui incremante un step à la position des servos jusqu'à ce qu'ils soient à leur position final
@@ -131,7 +132,7 @@ void move(short int TargetAngle[]){
     delay(speedDelay); // delai permettant de regler la vitesse
     Serial.println(cpt);
   }
-  //feedback(); // surement à supprimer
+  feedback(); // surement à supprimer
  
 }
 
@@ -183,7 +184,10 @@ void setup() {
 
 
   
-  
+  for(int i=0; i<8; i++)
+  {
+    targetMoinUn[i] = fd[i];
+  }
 
   pinMode(FDservo0, INPUT);
   pinMode(FDservo1, INPUT);
@@ -197,6 +201,13 @@ void setup() {
   fermeturePince();
   
 }
+
+void addOneAxe()
+{
+
+}
+
+
 
 void loop() {
   // Afficher les données reçues (pour débogage)
@@ -239,14 +250,8 @@ void loop() {
     }
     else if(receivedArray[0] == 5)
     {
-      
-      for(int i = 0; i<8; i++)
-      {
-        target[i] = target[i] / 1000
-      }
-      Serial.println(target);
-      //move(target);
-
+      move(target, targetMoinUn);
+      targetMoinUn = target;
     }
     else if(receivedArray[0] == 7)
     {
@@ -255,6 +260,10 @@ void loop() {
     else if(receivedArray[0] == 8)
     {
       fermeturePince();
+    }
+    else if(receivedArray[0] == 11)
+    {
+      
     }
   }
   delay(100);

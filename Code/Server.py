@@ -381,7 +381,7 @@ def handle_client(client_socket, client_address):
                 cut_data = data.split("/")
                 for element in cut_data:
                     print(element)
-                angle = move_final_pose([int(cut_data[0]),int(cut_data[1]),int(cut_data[2])], int(cut_data[3]),int(cut_data[4]),int(cut_data[5]))
+                angle = move_final_pose([float(cut_data[0]),float(cut_data[1]),float(cut_data[2])], float(cut_data[3]),float(cut_data[4]),float(cut_data[5]))
                 send_array(5,angle)
                 
             
