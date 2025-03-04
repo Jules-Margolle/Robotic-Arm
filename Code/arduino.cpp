@@ -261,10 +261,7 @@ void loop() {
     {
       fermeturePince();
     }
-    else if(receivedArray[0] == 11)
-    {
-      
-    }
+   
   }
   delay(100);
 }
