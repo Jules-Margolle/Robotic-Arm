@@ -117,7 +117,7 @@ void move(short int TargetAngle[], short int actualPosition[]){
   unsigned short int j = 0;
   unsigned short int cpt = 0;
   feedback();
-  for(j = 0; j<7;j++){
+  for(j = 0; j<8;j++){
     positionServo[j] = actualPosition[j];
   }
   // positionServo = recordPosition();
