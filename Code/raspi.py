@@ -1,4 +1,4 @@
-import smbus
+#import smbus
 import time
 
 import numpy as np
@@ -9,7 +9,7 @@ from scipy.optimize import fsolve
 ARDUINO_I2C_ADDRESS = 0x08
 
 # Créer une instance de bus
-bus = smbus.SMBus(1)  # 1 pour Raspberry Pi récente (I2C-1)
+#bus = smbus.SMBus(1)  # 1 pour Raspberry Pi récente (I2C-1)
 
 # Tableau pour stocker les positions
 positions = []

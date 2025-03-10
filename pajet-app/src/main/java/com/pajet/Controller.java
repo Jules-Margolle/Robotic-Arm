@@ -145,7 +145,7 @@ public class Controller {
 
     public void moveRecordedPositions()
     {
-        if(!isFreeMotion)
+        if(isFreeMotion)
         {
             switchFreeMotion();
         }
@@ -223,4 +223,24 @@ public class Controller {
         axe6TextField.setText(String.valueOf(Double.parseDouble(chaineCoupee[5]) - step));
         sendCoord();
     }
+
+    public void openPump()
+    {
+        io.toNetwork("7");
+    }
+
+    public void closePump()
+    {
+        io.toNetwork("8");
+    }
+    public void openGrip()
+    {
+        io.toNetwork("10");
+    }
+
+    public void closeGrip()
+    {
+        io.toNetwork("11");
+    }
+    
 }
