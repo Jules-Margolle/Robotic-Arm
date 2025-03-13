@@ -237,7 +237,7 @@ void loop() {
     }
     else if(receivedArray[0] == 4)
     {
-      //attachServo(); a verifier parce que je passe la commande dans le client java
+      //attachServo(); a verifier parce que je passe la commande dans le client java mais à décommenter si on commande en mode console
       short int temp[indexRecordedPositions];
 
       for(int i=0 ; i<indexRecordedPositions; i++)
