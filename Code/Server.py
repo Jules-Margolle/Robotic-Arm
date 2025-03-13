@@ -3,12 +3,16 @@ import socket
 import time
 import numpy as np
 import math
+import cv2
+import threading
 
+camera_position = None  # Contiendra les coordonnées (x_cam, y_cam)
+lock = threading.Lock()
 
 ARDUINO_I2C_ADDRESS = 0x08
 #bus = smbus.SMBus(1)
 
-host = '127.0.0.1'
+host = '0.0.0.0'
 port = 12345
 
 def send_array(command, array):
@@ -325,18 +329,19 @@ def move_final_pose(P6, pitch, roll, yaw):
     #angle_axe_mot = [map_value(theta1, -180, 180, 0, 180),-(90 - map_value(theta2, -180, 180, 0, 180))+90,(90 - map_value(theta2, -180, 180, 0, 180))+ 90, -(90 - map_value(theta3, -180, 180, 0, 180))+90,(90 - map_value(theta3, -180, 180, 0, 180))+ 90, map_value(theta4, 1800, 180, 0, 180),map_value(theta5, -180, 180, 0, 180), map_value(theta6,-180, 180, 0, 180)]
     # print("Angle des moteurs : ", angle_axe_mot)
     # Conversion des angles pour les moteurs
-    angle = [map_angle_to_motor_command(theta1),-(90 - map_angle_to_motor_command(theta2))+90,(90 - map_angle_to_motor_command(theta2))+90,-(90 - map_angle_to_motor_command(theta3))+90 ,(90- map_angle_to_motor_command(theta3))+90,map_angle_to_motor_command(theta4), map_angle_to_motor_command(theta5), map_angle_to_motor_command(theta6)]
+    angle = [int(map_angle_to_motor_command(theta1)),int(-(90 - map_angle_to_motor_command(theta2))+90),int((90 - map_angle_to_motor_command(theta2))+90),int(-(90 - map_angle_to_motor_command(theta3))+90 ),int((90- map_angle_to_motor_command(theta3))+90),int(map_angle_to_motor_command(theta4)), int(map_angle_to_motor_command(theta5)), int(map_angle_to_motor_command(theta6))]
     print("Angle des moteurs : ", angle)
     return angle
 
+def visionMode():
+    t_camera = threading.Thread(target=camera_thread)
+    t_calc = threading.Thread(target=calculation_thread)
+    t_camera.start()
+    t_calc.start()
+    t_camera.join()
+    t_calc.join()
 
 
-def send_array(command, array):
-    
-    for i in range(0, len(array), 32):
-        chunk = array[i:i+32]
-        bus.write_i2c_block_data(ARDUINO_I2C_ADDRESS, command, chunk)  
-        time.sleep(0.1)
 
 def read_feedback():
     data = bus.read_i2c_block_data(ARDUINO_I2C_ADDRESS, 0, 8)
@@ -347,8 +352,139 @@ def data_handler(data):
     array_to_send = [0]
     send_array(int(data), array_to_send)
 
+def print_img(image):
+    cv2.imshow('image', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-#def send_to_client():
+def mask_image_red(image):
+    # Paramètres pour la couleur rouge
+    teinte = 353 / 2
+    saturation = 90 * 255 / 100
+    valeur = 50 * 255 / 100
+    i = 30  # intervalle de recherche
+    img_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(img_hsv, (teinte - i, saturation - i * 3, valeur - i * 3),(teinte + i, saturation + i * 3, valeur + i * 3))
+    nv_img = cv2.bitwise_or(mask, mask)
+    return nv_img
+
+def traitement_image(image):
+    # Applique des opérations morphologiques pour améliorer le masque
+    elmnt_struct = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 10))
+    image = cv2.morphologyEx(image, cv2.MORPH_OPEN, elmnt_struct)
+    image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, elmnt_struct)
+    # Détection des contours
+    contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    try :
+        coordonnees = cv2.minEnclosingCircle(contours[0])
+    except:
+        coordonnees = None
+        print("Aucune bille détectée")
+        return image, 0
+    return image, coordonnees
+
+def map_vision(input_value):
+    # Plages d'entrée
+    input_min = -320
+    input_max = 320
+
+    # Plages de sortie
+    output_min = -600
+    output_max = 600
+
+    # Calcul de la commande du moteur
+    output_command = (input_value - input_min) * (output_max - output_min) / (input_max - input_min) + output_min
+
+    # Limiter la sortie entre output_min et output_max
+    output_command = max(output_min, min(output_max, output_command))
+
+    return output_command
+
+def camera_thread():
+    global camera_position
+    x_cam_m = [0,0,0]
+    print("Ouverture de la webcam...")
+    cap = cv2.VideoCapture(0)
+    print("Webcam ouverte")
+    if not cap.isOpened():
+        print("Erreur : impossible d'ouvrir la webcam.")
+        return
+    print("Webcam ouverte")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        #affiche la taille de l'image
+        #print(frame.shape)
+        # Traitement pour détecter la bille (couleur rouge)
+        masque = mask_image_red(frame)
+        img_f, coordonnees = traitement_image(masque)
+        if coordonnees != 0 and coordonnees is not None:
+            # Dessiner un cercle autour de la bille détectée
+            center = (int(coordonnees[0][0]), int(coordonnees[0][1]))
+            radius = int(coordonnees[1])
+            cv2.circle(frame, center, radius, (0, 255, 0), 2)
+
+            # x par rapport au centre (ici 320)
+            #fait une moyenne de x_cam sur les 3dernières valeurs enregistrées
+            # x_cam_m[2] = x_cam_m[1]
+            # x_cam_m[1] = x_cam_m[0]
+            # x_cam_m[0] = frame.shape[1]/2 - coordonnees[0][0] # ajuste les valeurs par rapport au centre de l'image 
+            x_cam = 200  
+            y_cam = frame.shape[1]/2 - coordonnees[0][0]
+            y_cam = map_vision(y_cam)
+            # Mettre à jour la position partagée
+            with lock:
+                camera_position = (x_cam, y_cam)
+        # Afficher les images
+        #cv2.imshow('Camera', frame)
+        #cv2.imshow('Processed', img_f)
+        # if cv2.waitKey(50) & 0xFF == ord('q'):
+        #     break
+        time.sleep(0.05)
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+def calculation_thread():
+    # Paramètres du robot
+    z_cam = 200
+    d6 = 47.998
+    d1 = 197.3
+    a2 = 190.2
+    a3 = 247.6
+    while True:
+        with lock:
+            pos = camera_position
+        # Si aucune donnée n'est disponible, on attend un peu
+        if pos is None:
+            time.sleep(0.05)
+            continue
+        x_cam, y_cam = pos
+        # Constitution du vecteur de position de l'effecteur final
+        P6 = np.array([x_cam, y_cam, z_cam]) #position final de l'effecteur en x,y,z
+        pitch = 90 # definie le pitch par rapport à l'origine
+        roll = 0
+        yaw = 0
+        try : 
+            print("\n\n\n",P6)
+            R0_6 = compute_rotation_matrix(np.deg2rad(yaw), np.deg2rad(pitch), np.deg2rad(roll))
+            P_w = compute_wrist_position(R0_6, P6, d6)
+            theta1, theta2, theta3 = compute_joint_angles(P_w)
+            print(f"Angles des 3 premiers joints : {[theta1, theta2, theta3]}\n") 
+            theta5, theta4, theta6 = compute_wrist_angles(R0_6, theta1, theta2, theta3,-pitch, roll, yaw)
+            theta1,theta2,theta3,theta4,theta5,theta6 = adapt_angle([theta1,theta2,theta3,theta4,theta5,theta6])
+            print(f"Angles des 3 derniers joints : {[theta4, theta5, theta6]}\n")
+            theta2 = theta2+8
+            theta3 = theta3+7
+            angle = [map_angle_to_motor_command(theta1),-(90 - map_angle_to_motor_command(theta2))+90,(90 - map_angle_to_motor_command(theta2))+90,-(90 - map_angle_to_motor_command(theta3))+90 ,(90- map_angle_to_motor_command(theta3))+90,map_angle_to_motor_command(theta4), map_angle_to_motor_command(theta5), map_angle_to_motor_command(theta6)]
+            for i in range(len(angle)):
+                angle[i] = int(angle[i])
+            print("Angle des moteurs : ", angle)
+            send_array(9, angle)#fonction pour envoyer les valeurs aux moteurs
+         #   time.sleep(0.5) # deja un time sleep dans la fonction send_array de 0.1
+        except:
+            print("error\n")
 
 
 
@@ -364,7 +500,8 @@ def handle_client(client_socket, client_address):
                 if int(data) != 100:
                     print(f"Message reçu : {data.decode('utf-8')}")
                     data_handler(data.decode('utf-8'))
-            
+            elif data == "200":
+                visionMode()
             else:
                 print("entrée du else")
                 cut_data = data.split("/")

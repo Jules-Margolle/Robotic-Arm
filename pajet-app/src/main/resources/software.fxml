@@ -72,7 +72,7 @@
                         <Font size="18.0" />
                      </font>
                   </Button>
-                  <Button layoutX="8.0" layoutY="432.0" mnemonicParsing="false" onAction="#resetIndexPosition" prefHeight="31.0" prefWidth="214.0" text="Reset Index Position">
+                  <Button layoutX="8.0" layoutY="388.0" mnemonicParsing="false" onAction="#resetIndexPosition" prefHeight="31.0" prefWidth="214.0" text="Reset Index Position">
                      <font>
                         <Font size="16.0" />
                      </font>
@@ -89,6 +89,7 @@
                      </font>
                   </Label>
                   <Button layoutX="129.0" layoutY="330.0" mnemonicParsing="false" onAction="#setStep" text="Confirmer" />
+                  <Button fx:id="visionButton" layoutX="9.0" layoutY="438.0" mnemonicParsing="false" onAction="#switchVisionMode" prefHeight="26.0" prefWidth="214.0" text="Vision" />
           </children>
         </AnchorPane>
         <ScrollPane prefHeight="-1.0" prefWidth="-1.0">
@@ -101,7 +102,7 @@
                                  <children>
                                     <Button fx:id="openGripBut" mnemonicParsing="false" onAction="#openGrip" text="ouvrir la pince" />
                                     <Button fx:id="closeGripBut" mnemonicParsing="false" onAction="#closeGrip" text="fermer la pince" />
-                                    <Button fx:id="openGripBut" mnemonicParsing="false" onAction="#openGrip" text="fermer la pompe" />
+                                    <Button fx:id="openGripBut" mnemonicParsing="false" onAction="#openPump" text="fermer la pompe" />
                                     <Button fx:id="closePumpBut" mnemonicParsing="false" onAction="#closePump" text="ouvrir la pompe" />
                                  </children></HBox>
                               <HBox prefHeight="154.0" prefWidth="655.0" spacing="10.0">

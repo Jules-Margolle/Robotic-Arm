@@ -19,6 +19,7 @@ public class Controller {
     private Scene scene;
     private Parent root;
     private boolean isFreeMotion = false;
+    private boolean isVisionMode = false;
 
     private Socket socket = connectionController.getSocket();
     private IOCommands io = connectionController.getIoCommands();
@@ -241,6 +242,16 @@ public class Controller {
     public void closeGrip()
     {
         io.toNetwork("11");
+    }
+
+    public void switchVisionMode()
+    {
+        isVisionMode = !isVisionMode;
+
+        if(isVisionMode)
+        {
+            io.toNetwork("200");
+        }
     }
     
 }
