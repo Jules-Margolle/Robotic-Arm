@@ -12,8 +12,8 @@ lock = threading.Lock()
 ARDUINO_I2C_ADDRESS = 0x08
 #bus = smbus.SMBus(1)
 
-host = '0.0.0.0'
-port = 12345
+host = '0.0.0.0' #permet d'accepter les connexions
+port = 8080
 
 def send_array(command, array):
     # Découper le tableau en tranches de 32 octets (limite I2C)
@@ -501,7 +501,7 @@ def handle_client(client_socket, client_address):
                     print(f"Message reçu : {data.decode('utf-8')}")
                     data_handler(data.decode('utf-8'))
             elif data == "200":
-                visionMode()
+                visionMode() # Il manque une option dans le code pour quitter le mode vision à l'appui sur le bouton dans le logiciel (fermer le thread peut être une option)
             else:
                 print("entrée du else")
                 cut_data = data.split("/")
